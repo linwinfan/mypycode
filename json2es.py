@@ -9,6 +9,13 @@ import requests
 import MySQLdb
 import datetime
 
+from multiprocessing import Pool
+from threading import Thread
+
+import multiprocessing
+from multiprocessing import Process
+from multiprocessing import Pool,TimeoutError
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
@@ -100,62 +107,77 @@ def getJobs():
         return None
 
 
-s = ConnWaf()
-for r in getJobs():
-
-    dtstart = datetime.datetime.strptime('2019-01-01', '%Y-%m-%d')
-    limit = 1000
+def CreateTask(s,url,index,tbl,dtstart):
+    # r=s.post(url,{"startTime":'2019-01-01',"endTime":'2019-01-01',"start":0,"limit":50})
+    try:
+        print(url)
+        jn=demjson.decode(s.get(url,verify=False).content)
+        # print(jn)
+        #bulk_es(connes(),index,r[1],jn['result'],dtstart)
+        bulk_es(connes(),index,tbl,jn['result'],dtstart)
+        # exit()
+        
+    except demjson.JSONDecodeError as identifier:
+        print(u"JSON 格式错误，跳过")
+        pass
+    except KeyError as ke:
+        print(jn)
+        pass
     
-    while True:
-        exist = False
-        index = 'waf_%s-%s' % (r[1], dtstart.strftime('%Y.%m'))
-        #if(r[1] == 'hacklog' or r[1] == 'url_access'):
-        #    index = '%s-%s' % (r[1], dtstart.strftime('%Y.%m.%d'))
-        try:
-            es = connes()
-            if(es.count(doc_type=r[1], index=index,
-                        body=                    {"query": {"range": {"eventdate": {"gte": dtstart.strftime('%Y-%m-%d'), "lte":dtstart.strftime('%Y-%m-%d'),"format":"yyyy-MM-dd"}}}}
-                        )["count"] > 0):
-                # print("has index %s %s" %(index, dtstart))
-                exist = True
-            else:
-                print("%s found but is 0 in %s" % (dtstart, index))
-        except BaseException as e:
-            print('notfount index %s' % (index))
-            pass
-        if(not exist):
-            dstart=0
-            # print(start)
-            # url='https://172.23.2.253/html/watch/accesscount/list' #?startTime=2019-01-01&endTime=2019-01-01&start=0&limit=50&orderBy=sitecount&orderType=DESC'
-            # url='https://172.23.2.253/html/watch/rpiwebsite/list'
-            while True:
-                url=r[0].replace('dstr',dtstart.strftime('%Y-%m-%d')).replace('dstart',str(dstart)).replace('dlimit',str(limit)).replace('purl',r[2])
-                print(url)
-                s.headers['Content-Type']='application/json; charset=UTF-8'
-                # r=s.post(url,{"startTime":'2019-01-01',"endTime":'2019-01-01',"start":0,"limit":50})
-                try:
-                    jn=demjson.decode(s.get(url,verify=False).content)
-                    # print(jn)
-                    bulk_es(connes(),index,r[1],jn['result'],dtstart)
-                    # exit()
-                    
-                except demjson.JSONDecodeError as identifier:
-                    print(u"JSON 格式错误，跳过")
-                    pass
-                except KeyError as ke:
-                    print(jn)
-                    break
-                
-                dstart=dstart+limit
-                #print(jn['rowCount'])
-                if(int(jn['rowCount'])<=dstart):
-                    break
-                else:
-                    print('%d / %s finished ' %(dstart,jn['rowCount']))
-                    #break
-                # print(jn['rowCount'])
-                # print(len(jn['result']))
+    
+    #print(jn['rowCount'])
+    if(count<=dstart):
+        print('%s %s finished ' %(index,dtstart))
+    else:
+        print('%d / %s finished ' %(dstart,jn['rowCount']))
 
-        dtstart=dtstart+datetime.timedelta(days=1)
-        if(dtstart.strftime('%Y-%m-%d')==datetime.datetime.now().strftime('%Y-%m-%d')):
-            break
+
+if __name__ == '__main__':
+    s = ConnWaf()
+    s.headers['Content-Type']='application/json; charset=UTF-8'
+    dtend=datetime.datetime.strptime('2019-01-10', '%Y-%m-%d')
+
+    p=Pool(4)
+    for r in getJobs():
+        print(r[1])
+        dtstart = datetime.datetime.strptime(datetime.datetime.now().strftime('%Y-%m-%d'),'%Y-%m-%d')-datetime.timedelta(days=1) 
+        limit = 1000
+        
+        while dtstart>=dtend:
+            exist = False
+            index = 'waf_%s-%s' % (r[1], dtstart.strftime('%Y.%m'))
+            #if(r[1] == 'hacklog' or r[1] == 'url_access'):
+            #    index = '%s-%s' % (r[1], dtstart.strftime('%Y.%m.%d'))
+            try:
+                es = connes()
+                if(es.count(doc_type=r[1], index=index,
+                            body=                    {"query": {"range": {"eventdate": {"gte": dtstart.strftime('%Y-%m-%d'), "lte":dtstart.strftime('%Y-%m-%d'),"format":"yyyy-MM-dd"}}}}
+                            )["count"] > 0):
+                    # print("has index %s %s" %(index, dtstart))
+                    exist = True
+                else:
+                    print("%s found but is 0 in %s" % (dtstart, index))
+            except BaseException as e:
+                print('notfount index %s' % (index))
+                pass
+            if(not exist):
+                dstart=0
+                # print(start)
+                # url='https://172.23.2.253/html/watch/accesscount/list' #?startTime=2019-01-01&endTime=2019-01-01&start=0&limit=50&orderBy=sitecount&orderType=DESC'
+                # url='https://172.23.2.253/html/watch/rpiwebsite/list'
+                url=r[0].replace('dstr',dtstart.strftime('%Y-%m-%d')).replace('dstart',str(dstart)).replace('dlimit',str(1)).replace('purl',r[2])
+                jn=demjson.decode(s.get(url,verify=False).content)
+                count=int(jn['rowCount'])
+                while dstart<count:
+                    url=r[0].replace('dstr',dtstart.strftime('%Y-%m-%d')).replace('dstart',str(dstart)).replace('dlimit',str(limit)).replace('purl',r[2])
+                    #print(url)
+                    p.apply_async(CreateTask,args=(s,url,index,r[1],dtstart))
+                    #break
+                    dstart=dstart+limit
+                    # print(jn['rowCount'])
+                    # print(len(jn['result']))
+
+            dtstart=dtstart-datetime.timedelta(days=1)
+            #if(dtstart.strftime('%Y-%m-%d')==datetime.datetime.now().strftime('%Y-%m-%d')):
+        p.close()
+        p.join()
