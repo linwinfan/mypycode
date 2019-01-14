@@ -151,7 +151,7 @@ if __name__ == '__main__':
             try:
                 es = connes()
                 if(es.count(doc_type=r[1], index=index,
-                            body=                    {"query": {"range": {"eventdate": {"gte": dtstart.strftime('%Y-%m-%d'), "lte":dtstart.strftime('%Y-%m-%d'),"format":"yyyy-MM-dd"}}}}
+                            body=                    {"query": {"range": {"eventdate": {"gte": dtstart.strftime('%Y-%m-%d'), "lte":dtstart.strftime('%Y-%m-%d'),"format":"yyyy-MM-dd","time_zone":"+08:00"}}}}
                             )["count"] > 0):
                     # print("has index %s %s" %(index, dtstart))
                     exist = True
@@ -168,9 +168,12 @@ if __name__ == '__main__':
                 url=r[0].replace('dstr',dtstart.strftime('%Y-%m-%d')).replace('dstart',str(dstart)).replace('dlimit',str(1)).replace('purl',r[2])
                 jn=demjson.decode(s.get(url,verify=False).content)
                 count=int(jn['rowCount'])
+                print(count)
                 while dstart<count:
                     url=r[0].replace('dstr',dtstart.strftime('%Y-%m-%d')).replace('dstart',str(dstart)).replace('dlimit',str(limit)).replace('purl',r[2])
                     #print(url)
+                    #print(s)
+                    #jn=demjson.decode(s.get(url,verify=False).content)
                     p.apply_async(CreateTask,args=(s,url,index,r[1],dtstart))
                     #break
                     dstart=dstart+limit
@@ -179,5 +182,5 @@ if __name__ == '__main__':
 
             dtstart=dtstart-datetime.timedelta(days=1)
             #if(dtstart.strftime('%Y-%m-%d')==datetime.datetime.now().strftime('%Y-%m-%d')):
-        p.close()
-        p.join()
+    p.close()
+    p.join()
