@@ -85,7 +85,7 @@ def openjsonfile():
 def ConnWaf():
     session = requests.Session()
     url_login = "https://172.23.2.253/html/common/login/checklogin"
-    login_data = {"waf_username": "lichunguo", "waf_password": 'cecgw@licg'}
+    login_data = {"waf_username": "lichunguo", "waf_password": 'cecgw@licg2019'}
     session.post(url_login, data=login_data, verify=False)
     # print(dir(session))
     return session
@@ -166,7 +166,9 @@ if __name__ == '__main__':
                 # url='https://172.23.2.253/html/watch/accesscount/list' #?startTime=2019-01-01&endTime=2019-01-01&start=0&limit=50&orderBy=sitecount&orderType=DESC'
                 # url='https://172.23.2.253/html/watch/rpiwebsite/list'
                 url=r[0].replace('dstr',dtstart.strftime('%Y-%m-%d')).replace('dstart',str(dstart)).replace('dlimit',str(1)).replace('purl',r[2])
-                jn=demjson.decode(s.get(url,verify=False).content)
+                res=s.get(url,verify=False).content
+                print(res)
+                jn=demjson.decode(res)
                 count=int(jn['rowCount'])
                 print(count)
                 while dstart<count:

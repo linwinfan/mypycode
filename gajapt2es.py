@@ -20,7 +20,7 @@ from bs4 import BeautifulSoup
 
 #reload(sys)
 #sys.setdefaultencoding('utf-8')
-base_url = "https://202.96.189.113:10443/"
+base_url = ""
 
 def connes():
     # _index = 'packets-2018-07-30' #修改为索引名
@@ -96,7 +96,7 @@ def ConnAHAPT():
     session.headers['Referer']=url_login
     session.headers['Content-Type']="application/x-www-form-urlencoded"
     session.headers['User-Agent']='Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
-    login_data = {"tokenId":tokenid,"j_username": "ypt", "j_password": 'yunpingtai.18'}
+    login_data = {"tokenId":tokenid,"j_username": "", "j_password": ''}
     session.post("%sadmin/j_spring_security_check" % (base_url), data=login_data, verify=False).text
     # print(dir(session))
     return session

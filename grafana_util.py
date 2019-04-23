@@ -8,9 +8,9 @@ import sys
 #sys.setdefaultencoding('utf-8')
 
 
-cli = GrafanaFace(('admin', 'sbdwlfty'), host='172.21.9.21',
+cli = GrafanaFace(('admin', ''), host='172.21.9.21',
         url_path_prefix='', protocol='http',port=3001)
-to_cli = GrafanaFace(('admin', 'sbdwlfty'), host='172.21.9.21',
+to_cli = GrafanaFace(('admin', ''), host='172.21.9.21',
         url_path_prefix='', protocol='http',port=3000)
 #print(dir(cli))
 for d in cli.datasource.list_datasources():
