@@ -58,6 +58,7 @@ def write_list_and_form_view(odoo,modelname):
             #print(dir(uv))
             #uv_list=uv.create({'model':model.model,'type':'tree','name':uv_list_name,'arch':xmllist})
             uv_list=uv.create({'model':model.model,'type':'form','name':uv_form_name,'arch':xmlform})
+            
 def writeselectfield(odoo,mid,name,desc,select):
     field = odoo.env['ir.model.fields']
     #fields = field.search([('name','=',names[0])])
